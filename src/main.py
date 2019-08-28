@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, '..')
 from Utils import loadData, splitData
 
-from model import M1, M2
+from model import DataStoriesTaskA
 
 from dataset import loadEmbeddings, SentimentSentencesDataset, IMDBORSSTDatasetWrapper
 from preprocess import preprocess_sentence_ekphrasis
@@ -17,71 +17,11 @@ from torch.utils.data import ConcatDataset
 from tqdm import tqdm
 import yaml
 from sklearn.metrics import f1_score, accuracy_score
+import argparse
 
 from torchtext import datasets
 from torchtext import data
 
-
-
-
-def runExp1():
-    expDevice = device('cuda:0')
-    data_files = ['../../Data/twitter-2013train.txt',
-                        '../../Data/twitter-2015train.txt',
-                        '../../Data/twitter-2016train.txt']
-    sentences, labels = loadData(data_files)
-    train_sentences, test_sentences, train_labels, test_labels = splitData(sentences, labels, val_size=0.2)
-    wordToEmbeddingIdx, embeddingMatrix = loadEmbeddings('embeddings/datastories.twitter.50d.txt')
-    preprocessor_function = lambda sentence: preprocess_sentence_ekphrasis(sentence)
-    sequence_length = 50
-    train_dataset = SentimentSentencesDataset(train_sentences, train_labels, wordToEmbeddingIdx, preprocessor_function, sequence_length = sequence_length)
-    test_dataset = SentimentSentencesDataset(test_sentences, test_labels, wordToEmbeddingIdx, preprocessor_function,
-                                             sequence_length=sequence_length)
-    batch_size = 64
-    num_workers = 8
-    train_loader = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=num_workers)
-    test_loader = DataLoader(test_dataset, batch_size, shuffle=True, num_workers=num_workers)
-    n_epochs = 50
-    embeddingMatrix = torch.tensor(embeddingMatrix, dtype=torch.float32)
-    embeddingMatrix = embeddingMatrix.to(expDevice)
-    model = M1(embeddingMatrix, n_lstm_layers=2, lstm_layer_size=150, dropout_propability=0.01, bidirectional=True, sequence_length=sequence_length)
-    model = model.to(expDevice)
-    loss_function = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    for epoch_idx in range(n_epochs):
-        running_loss = 0
-        print('Training Epoch {}...'.format(epoch_idx + 1))
-        model.train()
-        for train_x, train_y in tqdm(train_loader):
-            train_x = train_x.to(expDevice)
-            train_y = train_y.to(expDevice)
-            optimizer.zero_grad()
-            pred_y = model(train_x)
-            loss_val = loss_function(pred_y, train_y)
-            running_loss += loss_val.item()
-            loss_val.backward()
-            optimizer.step()
-        running_loss /= len(train_dataset)
-        print('Avg Training loss: {}'.format(running_loss))
-        with torch.no_grad():
-            running_loss = 0
-            print('Testing ...')
-            model.eval()
-            total = 0
-            correct = 0
-            for test_x, test_y in tqdm(test_loader):
-                test_x = test_x.to(expDevice)
-                test_y = test_y.to(expDevice)
-                pred_y = model(test_x)
-                loss_val = loss_function(pred_y, test_y)
-                running_loss += loss_val.item()
-                _, predicted_labels = torch.max(pred_y.data, 1)
-                total += pred_y.size(0)
-                correct += (predicted_labels == test_y).sum().item()
-            accuracy = float(correct) / total
-            print('Accuracy at epoch: {} is {}'.format(epoch_idx + 1, accuracy))
-
-#def run_on_dataset_and_compute_metrics(model, dataset, device, isTraining=False)
 
 def train_model(model_name, model, data_files, device_name, batch_size, n_epochs, wordToEmbeddingIdx, max_sequence_length, learning_rate, num_workers, test_split=0.2, useExtraTrainingData=True):
     expDevice = device(device_name)
@@ -173,7 +113,12 @@ def train_model(model_name, model, data_files, device_name, batch_size, n_epochs
             # compute and print f-score
             #print('Accuracy at epoch: {} is {}'.format(epoch_idx + 1, accuracy))
 
-def runExp2(config_file_path):
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='DataStories Training')
+    parser.add_argument('--config-file', default=None, help='The config file to use')
+    args = parser.parse_args()
+    config_file_path = args.config_file
     with open(config_file_path, mode='r') as config_file_handler:
         config = yaml.load(config_file_handler)
     model_config = config['model']
@@ -182,12 +127,8 @@ def runExp2(config_file_path):
     embeddingMatrix = torch.tensor(embeddingMatrix, dtype=torch.float32)
     #device = torch.device(training_config['device_name'])
     model_config.pop('embedding_file_path')
-    model = M2(embeddingMatrix=embeddingMatrix, **model_config)
+    model = DataStoriesTaskA(embeddingMatrix=embeddingMatrix, **model_config)
     #model = model.to(device)
-    train_model(model_name='M2',model=model, wordToEmbeddingIdx=wordToEmbeddingIdx, **training_config)
+    train_model(model_name='DataStoriesTaskA',model=model, wordToEmbeddingIdx=wordToEmbeddingIdx, **training_config)
     model_state_dictionary = model.state_dict()
     torch.save(model_state_dictionary, 'models/exp2.pth')
-
-if __name__ == '__main__':
-    # runExp1()
-    runExp2('configs/config1.yaml')

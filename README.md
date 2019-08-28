@@ -5,6 +5,7 @@
 - I have implemented this network for my Data Mining Project
 
 ## To Do
+- Make sure that the code compiles
 - Reorganize the code
 - Train the model and Show some statistics
 - Provide links for the data
