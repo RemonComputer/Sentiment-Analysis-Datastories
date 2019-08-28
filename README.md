@@ -24,4 +24,6 @@ pip3 install -r requirements.txt
 ## To Do
 - Train the model and Show some statistics (on the original hyper-parameters)
 - Add tensorboard graphs (Scalars of the training, development and testing metrics across epochs)
+- Add option to continue from a checkpoint
+- Add option to save checkpoint every iteration
 - Provide links for the pre-trained models
