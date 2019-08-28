@@ -1,23 +1,23 @@
 training:
     device_name: cuda:0
-    data_files:
-        - ../../Data/twitter-2013train.txt
-        - ../../Data/twitter-2015train.txt
-        - ../../Data/twitter-2016train.txt
-        #- ../../Data/train-dev-test/twitter-2013train-A.txt
-        #- ../../Data/train-dev-test/twitter-2015train-A.txt
-        #- ../../Data/train-dev-test/twitter-2016train-A.txt
-        #- ../../Data/train-dev-test/twitter-2013dev-A.txt
-        #- ../../Data/train-dev-test/twitter-2016dev-A.txt
-        #- ../../Data/train-dev-test/twitter-2013test-A.txt
-        #- ../../Data/train-dev-test/twitter-2015test-A.txt
-        #- ../../Data/train-dev-test/twitter-2016test-A.txt
+    train_data_files:
+        - Data/twitter-2013train-A.txt
+        - Data/twitter-2015train-A.txt
+        - Data/twitter-2016train-A.txt
+    dev_data_files:
+        - Data/twitter-2013dev-A.txt
+        - Data/twitter-2016dev-A.txt
+    test_data_files:
+        - Data/twitter-2013test-A.txt
+        - Data/twitter-2015test-A.txt
+        - Data/twitter-2016test-A.txt
+    useExtraTrainingData: True # Use additional datasets for training which are IMDB and SST Datasets for training
     max_sequence_length: 50 
     batch_size: 128
     n_epochs: 50
-    test_split: 0.2
     learning_rate: 0.001
     num_workers: 8
+    best_model_file_path: models/DatastoriesTaskAModel.pth
 model:
     embedding_file_path: embeddings/datastories.twitter.50d.txt
     n_lstm_layers: 2
@@ -25,5 +25,5 @@ model:
     dropout_propability_embeddings: 0.3
     dropout_propability_lstm: 0.5 
     bidirectional: True
-    embedding_trainable: False
+    embedding_trainable: True
 

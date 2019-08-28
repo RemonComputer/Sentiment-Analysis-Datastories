@@ -141,5 +141,9 @@ models/
 # pycharm project files
 .idea/
 
-# imdb dataset file
+# IMDB and SST dataset files
 .data/
+
+# avoid uploading embeddings
+embeddings/
+embedding/
